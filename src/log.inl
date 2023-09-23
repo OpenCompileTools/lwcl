@@ -3,6 +3,8 @@
 #include <initializer_list>
 #include <chrono>
 #include <ctime>
+#include <sstream>
+#include <mutex>
 #ifdef _WIN32
 #include <Windows.h>
 #endif
@@ -13,30 +15,42 @@ namespace oct {
 namespace lwcl {
 	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
 	void log(Args&&... args) {
-		if (options::program_log_level < msg_level) return;
+		if (options::program_log_level() < msg_level) return;
 
-		//Enable ansi escape codes in windows cmd
-		#ifdef _WIN32
-		SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-		#endif
+		std::ostringstream msg;
 
-		std::cout << MTy{} << modifiers<Ms...>{};
+		msg << MTy{} << modifiers<Ms...>{};
 		
-		if(options::log_prefix){
+		if(!std::is_same<MTy, no_prefix>::value && options::log_prefix()){
 			#ifndef OCT_LWCL_NO_TIMESTAMP
+			static std::mutex time_mutex;
+			std::unique_lock<std::mutex> t_lk(time_mutex);
 			std::time_t now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			std::cout << std::put_time(std::localtime(&now_time), "[%m/%d/%y|%H:%M:%S]");
+			msg << std::put_time(std::localtime(&now_time), "[%m/%d/%y|%H:%M:%S]");
+			t_lk.unlock();
 			#endif
 
 
-			std::cout << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]: ";
+			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]: ";
 		}
 
 		(void)std::initializer_list<int> { ((void)(
-			std::cout << std::forward<Args>(args)
+			msg << std::forward<Args>(args)
 		), 0)... };
 
-		//std::cout << typename MTy::undo_type{} << typename modifiers<Ms...>::undo_type{};
+		//msg << typename MTy::undo_type{} << typename modifiers<Ms...>::undo_type{};
+		
+		std::string msg_str(msg.str());
+		if(!msg_str.empty()){
+			static std::mutex output_mutex;
+			std::unique_lock<std::mutex> o_lk(output_mutex);
+			//Enable ansi escape codes in windows cmd
+			#ifdef _WIN32
+			SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+			#endif
+
+			std::cout << msg_str;
+		}
 	}
 
 	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
@@ -94,9 +108,7 @@ namespace lwcl {
 	namespace impl {															 \
 		template<typename MTy, std::uint8_t... Ms>								 \
 		void log_##name##_modifiers() {											 \
-			::oct::lwcl::options::log_prefix = false;							 \
-			log<ll::name, MTy, Ms...>();									     \
-			::oct::lwcl::options::log_prefix = true;							 \
+			log<ll::name, ::oct::lwcl::no_prefix>(MTy{}, modifiers<Ms...>{});	 \
 			return;																 \
 		}																		 \
 																				 \

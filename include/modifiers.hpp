@@ -29,6 +29,8 @@ namespace lwcl {
     using reset_modifiers = modifiers<0>;
 
     using empty_modifiers = modifiers<>;
+
+    struct no_prefix : modifiers<> {};
 }
 }
 

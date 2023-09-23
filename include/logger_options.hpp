@@ -1,19 +1,27 @@
 #pragma once
+#include <atomic>
 
 #include "log_level.hpp"
 
-
-#ifndef OCT_LWCL_DEFAULT_LOG_LEVEL 
-#define OCT_LWCL_DEFAULT_LOG_LEVEL info
-#endif
-
 namespace oct {
 namespace lwcl{
-	//TODO make these local static variables with thread safety
-	namespace options {
-		log_level program_log_level = ll::OCT_LWCL_DEFAULT_LOG_LEVEL;
+	//Variables are mutex'd (or atomic to resemble a mutex) solely to prevent data races
+	//- Since each set/get is only dealing with one variable, the memory order doesn't matter
+	//- Even if you use both a set and a get in two threads, the order isnt garaunteed anyway 
+	struct options {
+		static inline log_level program_log_level();
+		static inline log_level program_log_level(log_level new_val);
+		
 
-		bool log_prefix = true;
-	}
+		static inline bool log_prefix();
+		static inline bool log_prefix(bool new_val);
+
+	private:
+		static inline std::atomic<ll>& local_pll();
+
+		static inline std::atomic<bool>& local_prefix();
+	};
 }
 }
+
+#include "../src/logger_options.inl"

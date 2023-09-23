@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+#include "modifiers.hpp"
+
 namespace oct {
 namespace lwcl {
 	namespace style {
@@ -27,7 +29,19 @@ namespace lwcl {
 			framed = 51,
 			encircled,
 			overlined,
+
+			//no_prefix = -1,
 		};
 	}
 }
 }
+
+
+//namespace oct {
+//namespace lwcl {
+//	using remove_prefix = modifiers<style::no_prefix>;
+//
+//
+//	std::ostream& operator<<(std::ostream& os, remove_prefix) { return os; }
+//}
+//}
