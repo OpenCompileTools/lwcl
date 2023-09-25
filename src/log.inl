@@ -44,12 +44,11 @@ namespace lwcl {
 		if(!msg_str.empty()){
 			static std::mutex output_mutex;
 			std::unique_lock<std::mutex> o_lk(output_mutex);
-			//Enable ansi escape codes in windows cmd
-			#ifdef _WIN32
-			SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-			#endif
+			for(std::ostream* os : options::output_cpp_streams())
+				os->write(msg_str.c_str(), msg_str.size());
 
-			std::cout << msg_str;
+			for (std::FILE* f : options::output_c_streams())
+				std::fwrite(msg_str.c_str(), sizeof(typename std::ostringstream::char_type), msg_str.size(), f);
 		}
 	}
 

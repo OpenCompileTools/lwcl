@@ -18,8 +18,7 @@ namespace lwcl{
 
 
 	std::atomic<ll>& options::local_pll() {
-		static std::atomic<ll> pll(ll::OCT_LWCL_DEFAULT_LOG_LEVEL);
-		return pll;
+		return impl::local<std::atomic<ll>, ll>::get<>(ll::OCT_LWCL_DEFAULT_LOG_LEVEL);
 	}
 }
 }
@@ -38,15 +37,83 @@ namespace lwcl{
 
 
 	std::atomic<bool>& options::local_prefix() {
-		static std::atomic<bool> p(true);
-		return p;
+		return impl::local<std::atomic<bool>, bool>::get<>(true);
 	}
 }
 }
 
 
-//namespace oct {
-//namespace lwcl{
-//	
-//}
-//}
+namespace oct {
+namespace lwcl{
+	std::vector<std::FILE*> options::output_c_streams() {
+		std::unique_lock<std::mutex> lk(c_stream_mutex());
+		return local_c_streams();
+	}
+
+	template<typename... CStreams>
+	std::vector<std::FILE*> options::output_c_streams(CStreams*... new_streams) {
+		std::unique_lock<std::mutex> lk(c_stream_mutex());
+		local_c_streams().clear();
+		(void)std::initializer_list<int> { ((void)(
+			local_c_streams().push_back(new_streams)
+		), 0)...};
+		return local_c_streams();
+	}
+
+
+	std::vector<std::ostream*> options::output_cpp_streams() {
+		std::unique_lock<std::mutex> lk(cpp_stream_mutex());
+		return local_cpp_streams();
+	}
+
+	template<typename... OStreams>
+	std::vector<std::ostream*> options::output_cpp_streams(OStreams&... new_streams){
+		std::unique_lock<std::mutex> lk(cpp_stream_mutex());
+		local_cpp_streams().clear();
+		(void)std::initializer_list<int> { ((void)(
+			local_cpp_streams().push_back(&new_streams)
+		), 0)...};
+		return local_cpp_streams();
+	}
+	
+
+
+	std::vector<std::FILE*>& options::local_c_streams() {
+		return impl::local<std::vector<std::FILE*>, impl::default_construct>::get<>();
+	}
+
+	std::mutex& options::c_stream_mutex() {
+		return impl::local<std::mutex, impl::default_construct>::get<std::FILE>();
+	}
+
+
+	std::vector<std::ostream*>& options::local_cpp_streams() {
+		return impl::local<std::vector<std::ostream*>, std::initializer_list<std::ostream*>>::get<>({&std::cout});
+	}
+
+	std::mutex& options::cpp_stream_mutex() {
+		return impl::local<std::mutex, impl::default_construct>::get<std::ostream>();
+
+	}
+}
+}
+
+namespace oct {
+namespace lwcl {
+	namespace impl {
+		template<typename T, typename InitValTy>
+		template<typename ForTy>
+		T& local<T, InitValTy>::get(InitValTy init_val) {
+			static T t(init_val);
+			return t;
+		}
+
+		template<typename T>
+		template<typename ForTy>
+		T& local<T, default_construct>::get() {
+			static T t;
+			return t;
+		}
+	}
+}
+}
