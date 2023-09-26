@@ -17,6 +17,12 @@ namespace lwcl {
 	void log(Args&&... args) {
 		if (options::program_log_level() < msg_level) return;
 
+
+		static std::atomic<bool> sync_val_init(false);
+		if (!sync_val_init.exchange(true, std::memory_order_relaxed))
+			options::sync_with_stdio(false);
+
+
 		std::ostringstream msg;
 
 		msg << MTy{} << modifiers<Ms...>{};

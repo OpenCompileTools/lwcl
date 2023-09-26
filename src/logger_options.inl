@@ -37,10 +37,33 @@ namespace lwcl{
 
 
 	std::atomic<bool>& options::local_prefix() {
-		return impl::local<std::atomic<bool>, bool>::get<>(true);
+		return impl::local<std::atomic<bool>, bool>::get<bool>(true);
 	}
 }
 }
+
+
+namespace oct {
+namespace lwcl{
+	bool options::sync_with_stdio() {
+		return local_sync().load(std::memory_order_relaxed);
+	}
+
+	bool options::sync_with_stdio(bool new_val) {
+		local_sync().store(new_val, std::memory_order_relaxed);
+		std::unique_lock<std::mutex> lk(
+			impl::local<std::mutex, impl::default_construct>::get<std::ios_base>()
+		);
+		return std::ios_base::sync_with_stdio(new_val);
+	}
+
+
+	std::atomic<bool>& options::local_sync() {
+		return impl::local<std::atomic<bool>, bool>::get<std::ios_base>(false);
+	}
+}
+}
+
 
 
 namespace oct {

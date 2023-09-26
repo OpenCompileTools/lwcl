@@ -21,10 +21,15 @@ namespace lwcl{
 		static inline bool log_prefix();
 		static inline bool log_prefix(bool new_val);
 
+		static inline bool sync_with_stdio();
+		static inline bool sync_with_stdio(bool new_val);
+
 	private:
 		static inline std::atomic<ll>& local_pll();
 
 		static inline std::atomic<bool>& local_prefix();
+
+		static inline std::atomic<bool>& local_sync();
 
 
 	public:
