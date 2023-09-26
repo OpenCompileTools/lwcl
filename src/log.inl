@@ -11,10 +11,12 @@
 
 #include "logger_options.hpp"
 
+
 namespace oct {
 namespace lwcl {
+	//All log functions redirect to this one
 	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void log(Args&&... args) {
+	void thread_log(const std::string& thread_name, Args&&... args) {
 		if (options::program_log_level() < msg_level) return;
 
 
@@ -36,7 +38,7 @@ namespace lwcl {
 			t_lk.unlock();
 			#endif
 
-
+			msg << '[' << thread_name << ']';
 			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]: ";
 		}
 
@@ -59,6 +61,39 @@ namespace lwcl {
 	}
 
 	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	void thread_log(const std::string& thread_name, Args&&... args) {
+		return thread_log<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
+	}
+}
+}
+
+
+namespace oct {
+namespace lwcl {
+	//All log_line functions redirect to this one
+	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+	void thread_log_line(const std::string& thread_name, Args&&... args) {
+		thread_log<msg_level, MTy, Ms...>(thread_name, std::forward<Args>(args)..., '\n', reset_modifiers{});
+		return;
+	}
+
+
+	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	void thread_log_line(const std::string& thread_name, Args&&... args) {
+		return thread_log_line<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
+	}
+}
+}
+
+
+namespace oct {
+namespace lwcl {
+	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+	void log(Args&&... args) {
+		return thread_log<msg_level, MTy, Ms...>(options::default_thread_name(), std::forward<Args>(args)...);
+	}
+
+	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
 	void log(Args&&... args) {
 		return log<msg_level, empty_modifiers, Ms...>(std::forward<Args>(args)...);
 	}
@@ -70,8 +105,7 @@ namespace oct {
 namespace lwcl {
 	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
 	void log_line(Args&&... args) {
-		log<msg_level, MTy, Ms...>(std::forward<Args>(args)..., '\n', reset_modifiers{});
-		return;
+		return thread_log_line<msg_level, MTy, Ms...>(options::default_thread_name(), std::forward<Args>(args)...);
 	}
 
 
@@ -86,41 +120,66 @@ namespace lwcl {
 namespace oct {
 namespace lwcl {
 	#define L(name, ...) \
-	template<typename MTy, std::uint8_t... Ms, typename... Args> 				 \
-	void name(Args&&... args) {													 \
-		impl::log_##name##_modifiers<__VA_ARGS__>();							 \
-		return log<ll::name, MTy, Ms...>(std::forward<Args>(args)...);           \
-	}																			 \
-	                                                                             \
-	template<std::uint8_t... Ms, typename... Args>                               \
-	void name(Args&&... args) {													 \
-		return name<empty_modifiers, Ms...>(std::forward<Args>(args)...);		 \
-	}                                   										 \
-       																			 \
-	                                                                             \
-	template<typename MTy, std::uint8_t... Ms, typename... Args> 				 \
-	void name##_line(Args&&... args) {											 \
-		impl::log_##name##_modifiers<__VA_ARGS__>();							 \
-		return log_line<ll::name, MTy, Ms...>(std::forward<Args>(args)...);		 \
-	}																			 \
-                                                                 				 \
-	template<std::uint8_t... Ms, typename... Args>               				 \
-	void name##_line(Args&&... args) {											 \
-		return name##_line<empty_modifiers, Ms...>(std::forward<Args>(args)...); \
-	}																			 \
-																				 \
-																				 \
-	namespace impl {															 \
-		template<typename MTy, std::uint8_t... Ms>								 \
-		void log_##name##_modifiers() {											 \
-			log<ll::name, ::oct::lwcl::no_prefix>(MTy{}, modifiers<Ms...>{});	 \
-			return;																 \
-		}																		 \
-																				 \
-		template<std::uint8_t... Ms>											 \
-		void log_##name##_modifiers() {											 \
-			return log_##name##_modifiers<empty_modifiers, Ms...>();			 \
-		}																		 \
+	template<typename MTy, std::uint8_t... Ms, typename... Args>										\
+	void thread_##name(const std::string& thread_name, Args&&... args) {								\
+		impl::log_##name##_modifiers<__VA_ARGS__>();													\
+		return thread_log<ll::name, MTy, Ms...>(thread_name, std::forward<Args>(args)...);				\
+	}																									\
+																										\
+	template<std::uint8_t... Ms, typename... Args>														\
+	void thread_##name(const std::string& thread_name, Args&&... args) {								\
+		return thread_##name<empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);			\
+	}																									\
+																										\
+																										\
+	template<typename MTy, std::uint8_t... Ms, typename... Args>										\
+	void thread_##name##_line(const std::string& thread_name, Args&&... args) {							\
+		impl::log_##name##_modifiers<__VA_ARGS__>();													\
+		return thread_log_line<ll::name, MTy, Ms...>(thread_name, std::forward<Args>(args)...);			\
+	}																									\
+																										\
+	template<std::uint8_t... Ms, typename... Args>														\
+	void thread_##name##_line(const std::string& thread_name, Args&&... args) {							\
+		return thread_##name##_line<empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);	\
+	}																									\
+																										\
+																										\
+																										\
+	template<typename MTy, std::uint8_t... Ms, typename... Args>										\
+	void name(Args&&... args) {																			\
+		impl::log_##name##_modifiers<__VA_ARGS__>();													\
+		return log<ll::name, MTy, Ms...>(std::forward<Args>(args)...);									\
+	}																									\
+																										\
+	template<std::uint8_t... Ms, typename... Args>														\
+	void name(Args&&... args) {																			\
+		return name<empty_modifiers, Ms...>(std::forward<Args>(args)...);								\
+	}																									\
+																										\
+																										\
+	template<typename MTy, std::uint8_t... Ms, typename... Args>										\
+	void name##_line(Args&&... args) {																	\
+		impl::log_##name##_modifiers<__VA_ARGS__>();													\
+		return log_line<ll::name, MTy, Ms...>(std::forward<Args>(args)...);								\
+	}																									\
+																										\
+	template<std::uint8_t... Ms, typename... Args>														\
+	void name##_line(Args&&... args) {																	\
+		return name##_line<empty_modifiers, Ms...>(std::forward<Args>(args)...);						\
+	}																									\
+																										\
+																										\
+	namespace impl {																					\
+		template<typename MTy, std::uint8_t... Ms>														\
+		void log_##name##_modifiers() {																	\
+			log<ll::name, ::oct::lwcl::no_prefix>(MTy{}, modifiers<Ms...>{});							\
+			return;																						\
+		}																								\
+																										\
+		template<std::uint8_t... Ms>																	\
+		void log_##name##_modifiers() {																	\
+			return log_##name##_modifiers<empty_modifiers, Ms...>();									\
+		}																								\
 	}
 
 	OCT_LWCL_LOG_LEVELS

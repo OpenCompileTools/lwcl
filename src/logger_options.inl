@@ -5,6 +5,11 @@
 #define OCT_LWCL_DEFAULT_LOG_LEVEL info
 #endif
 
+#ifndef OCT_LWCL_DEFAULT_THREAD_NAME
+#define OCT_LWCL_DEFAULT_THREAD_NAME "Main"
+#endif
+
+
 namespace oct {
 namespace lwcl{
 	log_level options::program_log_level() {
@@ -60,6 +65,32 @@ namespace lwcl{
 
 	std::atomic<bool>& options::local_sync() {
 		return impl::local<std::atomic<bool>, bool>::get<std::ios_base>(false);
+	}
+}
+}
+
+
+namespace oct {
+namespace lwcl{
+	std::string options::default_thread_name() {
+		std::unique_lock<std::mutex> lk(dtn_mutex());
+		return local_dtn();
+	}
+
+	template<typename StringTy>
+	std::string options::default_thread_name(StringTy&& new_val) {
+		std::unique_lock<std::mutex> lk(dtn_mutex());
+		return (local_dtn() = std::forward<StringTy>(new_val));
+	}
+
+
+	std::string& options::local_dtn() {
+		constexpr static std::size_t init_size = sizeof(OCT_LWCL_DEFAULT_THREAD_NAME) / sizeof(OCT_LWCL_DEFAULT_THREAD_NAME[0]);
+		return impl::local<std::string, const char[init_size]>::get<>(OCT_LWCL_DEFAULT_THREAD_NAME);
+	}
+
+	std::mutex& options::dtn_mutex() {
+		return impl::local<std::mutex, impl::default_construct>::get<std::string>();
 	}
 }
 }
@@ -135,6 +166,14 @@ namespace lwcl {
 		template<typename ForTy>
 		T& local<T, default_construct>::get() {
 			static T t;
+			return t;
+		}
+
+
+		template<typename T, typename InitArrayTy, std::size_t ArraySize>
+		template<typename ForTy>
+		T& local<T, InitArrayTy[ArraySize]>::get(InitArrayTy (&init_val)[ArraySize]) {
+			static T t(init_val);
 			return t;
 		}
 	}
