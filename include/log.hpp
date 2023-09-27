@@ -59,46 +59,46 @@ namespace lwcl {
 
 namespace oct {
 namespace lwcl {
-	#define L(name, ...) \
-	template<typename MTy, std::uint8_t... Ms, typename... Args>				\
-	void name(Args&&... args);													\
-																				\
-	template<std::uint8_t... Ms, typename... Args>								\
-	void name(Args&&... args);													\
-																				\
-																				\
-	template<typename MTy, std::uint8_t... Ms, typename... Args>				\
-	void name##_line(Args&&... args);											\
-																				\
-	template<std::uint8_t... Ms, typename... Args>								\
-	void name##_line(Args&&... args);											\
-																				\
-																				\
-																				\
-	template<typename MTy, std::uint8_t... Ms, typename... Args>				\
-	void thread##name(const std::string& thread_name, Args&&... args);			\
-																				\
-	template<std::uint8_t... Ms, typename... Args>								\
-	void thread##name(const std::string& thread_name, Args&&... args);			\
-																				\
-																				\
-	template<typename MTy, std::uint8_t... Ms, typename... Args>				\
-	void thread##name##_line(const std::string& thread_name, Args&&... args);	\
-																				\
-	template<std::uint8_t... Ms, typename... Args>								\
-	void thread##name##_line(const std::string& thread_name, Args&&... args);	\
-																				\
-																				\
-	namespace impl {															\
-		template<typename MTy, std::uint8_t... Ms>								\
-		void log_##name##_modifiers();											\
-																				\
-		template<std::uint8_t... Ms>											\
-		void log_##name##_modifiers();											\
-	}
+    #define L(name, ...) \
+    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
+    void name(Args&&... args);                                                \
+                                                                              \
+    template<std::uint8_t... Ms, typename... Args>                            \
+    void name(Args&&... args);                                                \
+                                                                              \
+                                                                              \
+    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
+    void name##_line(Args&&... args);                                         \
+                                                                              \
+    template<std::uint8_t... Ms, typename... Args>                            \
+    void name##_line(Args&&... args);                                         \
+                                                                              \
+                                                                              \
+                                                                              \
+    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
+    void thread##name(const std::string& thread_name, Args&&... args);        \
+                                                                              \
+    template<std::uint8_t... Ms, typename... Args>                            \
+    void thread##name(const std::string& thread_name, Args&&... args);        \
+                                                                              \
+                                                                              \
+    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
+    void thread##name##_line(const std::string& thread_name, Args&&... args); \
+                                                                              \
+    template<std::uint8_t... Ms, typename... Args>                            \
+    void thread##name##_line(const std::string& thread_name, Args&&... args); \
+                                                                              \
+                                                                              \
+    namespace impl {                                                          \
+        template<typename MTy, std::uint8_t... Ms>                            \
+        void log_##name##_modifiers();                                        \
+                                                                              \
+        template<std::uint8_t... Ms>                                          \
+        void log_##name##_modifiers();                                        \
+    }
 
-	OCT_LWCL_LOG_LEVELS
-	#undef L
+    OCT_LWCL_LOG_LEVELS
+    #undef L
 }
 }
 
