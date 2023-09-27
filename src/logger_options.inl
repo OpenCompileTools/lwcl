@@ -17,8 +17,7 @@ namespace lwcl{
 	}
 
 	log_level options::program_log_level(log_level new_val) {
-		local_pll().store(new_val, std::memory_order_relaxed);
-		return new_val;
+		return local_pll().exchange(new_val, std::memory_order_relaxed);
 	}
 
 
@@ -36,8 +35,7 @@ namespace lwcl{
 	}
 
 	bool options::log_prefix(bool new_val) {
-		local_prefix().store(new_val, std::memory_order_relaxed);
-		return new_val;
+		return local_prefix().exchange(new_val, std::memory_order_relaxed);
 	}
 
 
@@ -55,11 +53,12 @@ namespace lwcl{
 	}
 
 	bool options::sync_with_stdio(bool new_val) {
-		local_sync().store(new_val, std::memory_order_relaxed);
 		std::unique_lock<std::mutex> lk(
 			impl::local<std::mutex, impl::default_construct>::get<std::ios_base>()
 		);
-		return std::ios_base::sync_with_stdio(new_val);
+		std::ios_base::sync_with_stdio(new_val);
+		lk.unlock();
+		return local_sync().exchange(new_val, std::memory_order_relaxed);
 	}
 
 
@@ -80,7 +79,7 @@ namespace lwcl{
 	template<typename StringTy>
 	std::string options::default_thread_name(StringTy&& new_val) {
 		std::unique_lock<std::mutex> lk(dtn_mutex());
-		return (local_dtn() = std::forward<StringTy>(new_val));
+		return std::exchange(local_dtn(), std::forward<StringTy>(new_val));
 	}
 
 
@@ -106,12 +105,13 @@ namespace lwcl{
 
 	template<typename... CStreams>
 	std::vector<std::FILE*> options::output_c_streams(CStreams*... new_streams) {
-		std::unique_lock<std::mutex> lk(c_stream_mutex());
-		local_c_streams().clear();
+		std::vector<std::FILE*> new_val;
+		new_val.reserve(sizeof...(CStreams));
 		(void)std::initializer_list<int> { ((void)(
-			local_c_streams().push_back(new_streams)
+			new_val.push_back(new_streams)
 		), 0)...};
-		return local_c_streams();
+		std::unique_lock<std::mutex> lk(c_stream_mutex());
+		return std::exchange(local_c_streams(), new_val);
 	}
 
 
@@ -122,12 +122,13 @@ namespace lwcl{
 
 	template<typename... OStreams>
 	std::vector<std::ostream*> options::output_cpp_streams(OStreams&... new_streams){
-		std::unique_lock<std::mutex> lk(cpp_stream_mutex());
-		local_cpp_streams().clear();
+		std::vector<std::ostream*> new_val;
+		new_val.reserve(sizeof...(OStreams));
 		(void)std::initializer_list<int> { ((void)(
-			local_cpp_streams().push_back(&new_streams)
+			new_val.push_back(&new_streams)
 		), 0)...};
-		return local_cpp_streams();
+		std::unique_lock<std::mutex> lk(cpp_stream_mutex());
+		return std::exchange(local_cpp_streams(), new_val);
 	}
 	
 
