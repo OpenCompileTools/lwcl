@@ -2,7 +2,6 @@
 
 #include <initializer_list>
 #include <chrono>
-#include <ctime>
 #include <sstream>
 #include <mutex>
 #ifdef _WIN32
@@ -34,10 +33,11 @@ namespace lwcl {
             static std::mutex time_mutex;                                                                  \
             std::unique_lock<std::mutex> t_lk(time_mutex);                                                 \
             std::time_t now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); \
-            msg << std::put_time(std::localtime(&now_time), OCT_LWCL_PREFIX_TIMESTAMP_FORMAT);             \
+            std::tm dummy;                                                                                 \
+            msg << std::put_time(impl::localtime(&now_time, &dummy), OCT_LWCL_PREFIX_TIMESTAMP_FORMAT);    \
 			t_lk.unlock();
 
-			#define OCT_LWCL_PREFIX_THREAD \ 
+			#define OCT_LWCL_PREFIX_THREAD \
 			msg << '[' << thread_name << ']';
 
             #define OCT_LWCL_PREFIX_LEVEL \
@@ -191,5 +191,30 @@ namespace lwcl {
     
     OCT_LWCL_LOG_LEVELS
     #undef L
+}
+}
+
+#if defined(__unix__) || (defined (__APPLE__) && defined (__MACH__))
+#include <unistd.h>
+#ifdef _POSIX_VERSION
+#define OCT_LWCL_HAS_POSIX
+#endif
+#endif
+
+
+namespace oct {
+namespace lwcl {
+    namespace impl {
+        std::tm* localtime(std::time_t* time, std::tm* buf) {
+            #if defined(_MSC_VER)
+            localtime_s(buf, time);
+            return buf;
+            #elif defined(OCT_LWCL_HAS_POSIX)
+            return localtime_r(time, buf);
+            #else
+            return (buf = std::localtime(time));
+            #endif
+        }
+    }
 }
 }

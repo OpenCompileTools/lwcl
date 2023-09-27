@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <ctime>
 
 #include "modifiers.hpp"
 #include "color.hpp"
@@ -101,6 +102,16 @@ namespace lwcl {
     #undef L
 }
 }
+
+
+namespace oct {
+namespace lwcl {
+    namespace impl {
+        std::tm* localtime(std::time_t* time, std::tm* buf);
+    }
+}
+}
+
 
 
 #include "../src/log.inl"
