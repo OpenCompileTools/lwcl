@@ -2,7 +2,7 @@
 
 
 #ifndef OCT_LWCL_INITIAL_LOG_LEVEL 
-#define OCT_LWCL_INITIAL_LOG_LEVEL info
+#define OCT_LWCL_INITIAL_LOG_LEVEL static_cast<std::size_t>(3)
 #endif
 
 #ifndef OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME
@@ -22,7 +22,7 @@ namespace lwcl{
 
 
 	std::atomic<ll>& options::local_pll() {
-		return impl::local<std::atomic<ll>, ll>::get<>(ll::OCT_LWCL_INITIAL_LOG_LEVEL);
+		return impl::local<std::atomic<ll>, ll>::get<>(static_cast<ll>(OCT_LWCL_INITIAL_LOG_LEVEL));
 	}
 }
 }
