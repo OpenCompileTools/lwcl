@@ -8,6 +8,16 @@
 
 #include "log_level.hpp"
 
+
+#ifndef OCT_LWCL_PREFIX_FORMAT
+#define OCT_LWCL_PREFIX_FORMAT OCT_LWCL_PREFIX_TIMESTAMP OCT_LWCL_PREFIX_THREAD OCT_LWCL_PREFIX_LEVEL
+#endif
+
+#ifndef OCT_LWCL_PREFIX_TIMESTAMP_FORMAT
+#define OCT_LWCL_PREFIX_TIMESTAMP_FORMAT "[%m/%d/%y|%H:%M:%S]"
+#endif
+
+
 namespace oct {
 namespace lwcl{
 	//Variables are mutexed (or atomic to resemble a mutex) solely to prevent data races and concurrent access

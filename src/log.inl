@@ -30,16 +30,23 @@ namespace lwcl {
 		msg << MTy{} << modifiers<Ms...>{};
 		
 		if(!std::is_same<MTy, no_prefix>::value && options::prefix_enabled()){
-			#ifndef OCT_LWCL_NO_TIMESTAMP
-			static std::mutex time_mutex;
-			std::unique_lock<std::mutex> t_lk(time_mutex);
-			std::time_t now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-			msg << std::put_time(std::localtime(&now_time), "[%m/%d/%y|%H:%M:%S]");
+			#define OCT_LWCL_PREFIX_TIMESTAMP \
+            static std::mutex time_mutex;                                                                  \
+            std::unique_lock<std::mutex> t_lk(time_mutex);                                                 \
+            std::time_t now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()); \
+            msg << std::put_time(std::localtime(&now_time), OCT_LWCL_PREFIX_TIMESTAMP_FORMAT);             \
 			t_lk.unlock();
-			#endif
 
+			#define OCT_LWCL_PREFIX_THREAD \ 
 			msg << '[' << thread_name << ']';
-			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]: ";
+
+            #define OCT_LWCL_PREFIX_LEVEL \
+			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]";
+
+            OCT_LWCL_PREFIX_FORMAT
+
+            
+            msg << ": ";
 		}
 
 		(void)std::initializer_list<int> { ((void)(

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <array>
 
+
 #ifndef OCT_LWCL_LOG_LEVELS
 #define OCT_LWCL_LOG_LEVELS \
 L(fatal,  color::fg::dark_red, style::bold) \
@@ -13,7 +14,6 @@ L(debug,  color::fg::light_gray)            \
 L(trace,  color::fg::dark_gray)             \
 L(loops,  color::fg::blue)
 #endif
-
 
 
 namespace oct {
