@@ -29,7 +29,7 @@ namespace lwcl {
 
 		msg << MTy{} << modifiers<Ms...>{};
 		
-		if(!std::is_same<MTy, no_prefix>::value && options::log_prefix()){
+		if(!std::is_same<MTy, no_prefix>::value && options::prefix_enabled()){
 			#ifndef OCT_LWCL_NO_TIMESTAMP
 			static std::mutex time_mutex;
 			std::unique_lock<std::mutex> t_lk(time_mutex);
@@ -52,10 +52,10 @@ namespace lwcl {
 		if(!msg_str.empty()){
 			static std::mutex output_mutex;
 			std::unique_lock<std::mutex> o_lk(output_mutex);
-			for(std::ostream* os : options::output_cpp_streams())
+			for(std::ostream* os : options::cpp_ostreams())
 				os->write(msg_str.c_str(), msg_str.size());
 
-			for (std::FILE* f : options::output_c_streams())
+			for (std::FILE* f : options::c_ostreams())
 				std::fwrite(msg_str.c_str(), sizeof(typename std::ostringstream::char_type), msg_str.size(), f);
 		}
 	}

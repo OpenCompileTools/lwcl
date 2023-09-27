@@ -1,12 +1,12 @@
 #include "logger_options.hpp"
 
 
-#ifndef OCT_LWCL_DEFAULT_LOG_LEVEL 
-#define OCT_LWCL_DEFAULT_LOG_LEVEL info
+#ifndef OCT_LWCL_INITIAL_LOG_LEVEL 
+#define OCT_LWCL_INITIAL_LOG_LEVEL info
 #endif
 
-#ifndef OCT_LWCL_DEFAULT_THREAD_NAME
-#define OCT_LWCL_DEFAULT_THREAD_NAME "Main"
+#ifndef OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME
+#define OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME "Main"
 #endif
 
 
@@ -22,7 +22,7 @@ namespace lwcl{
 
 
 	std::atomic<ll>& options::local_pll() {
-		return impl::local<std::atomic<ll>, ll>::get<>(ll::OCT_LWCL_DEFAULT_LOG_LEVEL);
+		return impl::local<std::atomic<ll>, ll>::get<>(ll::OCT_LWCL_INITIAL_LOG_LEVEL);
 	}
 }
 }
@@ -30,11 +30,11 @@ namespace lwcl{
 
 namespace oct {
 namespace lwcl{
-	bool options::log_prefix() {
+	bool options::prefix_enabled() {
 		return local_prefix().load(std::memory_order_relaxed);
 	}
 
-	bool options::log_prefix(bool new_val) {
+	bool options::prefix_enabled(bool new_val) {
 		return local_prefix().exchange(new_val, std::memory_order_relaxed);
 	}
 
@@ -84,8 +84,8 @@ namespace lwcl{
 
 
 	std::string& options::local_dtn() {
-		constexpr static std::size_t init_size = sizeof(OCT_LWCL_DEFAULT_THREAD_NAME) / sizeof(OCT_LWCL_DEFAULT_THREAD_NAME[0]);
-		return impl::local<std::string, const char[init_size]>::get<>(OCT_LWCL_DEFAULT_THREAD_NAME);
+		constexpr static std::size_t init_size = sizeof(OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME) / sizeof(OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME[0]);
+		return impl::local<std::string, const char[init_size]>::get<>(OCT_LWCL_INITIAL_DEFAULT_THREAD_NAME);
 	}
 
 	std::mutex& options::dtn_mutex() {
@@ -98,13 +98,13 @@ namespace lwcl{
 
 namespace oct {
 namespace lwcl{
-	std::vector<std::FILE*> options::output_c_streams() {
+	std::vector<std::FILE*> options::c_ostreams() {
 		std::unique_lock<std::mutex> lk(c_stream_mutex());
 		return local_c_streams();
 	}
 
 	template<typename... CStreams>
-	std::vector<std::FILE*> options::output_c_streams(CStreams*... new_streams) {
+	std::vector<std::FILE*> options::c_ostreams(CStreams*... new_streams) {
 		std::vector<std::FILE*> new_val;
 		new_val.reserve(sizeof...(CStreams));
 		(void)std::initializer_list<int> { ((void)(
@@ -115,13 +115,13 @@ namespace lwcl{
 	}
 
 
-	std::vector<std::ostream*> options::output_cpp_streams() {
+	std::vector<std::ostream*> options::cpp_ostreams() {
 		std::unique_lock<std::mutex> lk(cpp_stream_mutex());
 		return local_cpp_streams();
 	}
 
 	template<typename... OStreams>
-	std::vector<std::ostream*> options::output_cpp_streams(OStreams&... new_streams){
+	std::vector<std::ostream*> options::cpp_ostreams(OStreams&... new_streams){
 		std::vector<std::ostream*> new_val;
 		new_val.reserve(sizeof...(OStreams));
 		(void)std::initializer_list<int> { ((void)(

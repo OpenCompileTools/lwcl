@@ -18,8 +18,8 @@ namespace lwcl{
 		static inline log_level program_log_level(log_level new_val);
 		
 		
-		static inline bool log_prefix();
-		static inline bool log_prefix(bool new_val);
+		static inline bool prefix_enabled();
+		static inline bool prefix_enabled(bool new_val);
 
 		
 		static inline bool sync_with_stdio();
@@ -31,14 +31,14 @@ namespace lwcl{
 		static inline std::string default_thread_name(StringTy&& new_val);
 
 
-		static inline std::vector<std::FILE*> output_c_streams();
+		static inline std::vector<std::FILE*> c_ostreams();
 		template<typename... CStreams>
-		static inline std::vector<std::FILE*> output_c_streams(CStreams*... new_streams);
+		static inline std::vector<std::FILE*> c_ostreams(CStreams*... new_streams);
 
 		
-		static inline std::vector<std::ostream*> output_cpp_streams();
+		static inline std::vector<std::ostream*> cpp_ostreams();
 		template<typename... OStreams>
-		static inline std::vector<std::ostream*> output_cpp_streams(OStreams&... new_streams);
+		static inline std::vector<std::ostream*> cpp_ostreams(OStreams&... new_streams);
 
 
 	private:
