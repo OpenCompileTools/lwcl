@@ -4,7 +4,7 @@ project(LWCL VERSION 1.0.0 HOMEPAGE_URL https://github.com/OpenCompileTools/lwcl
 option(LINK_32_BIT "Link the LWCL library for a 32-bit target" OFF)
 
 list(APPEND MAIN_HEADERS
-    "include/log.hpp"
+    "include/logger.hpp"
 )
 
 add_library(${PROJECT_NAME} INTERFACE)
