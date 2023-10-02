@@ -8,7 +8,7 @@
 L(fatal,  color::fg::dark_red, style::bold) \
 L(error,  color::fg::red)                   \
 L(warn,   color::fg::yellow)                \
-L(info)                                     \
+L(info,)                                     \
 L(system, color::fg::cyan)                  \
 L(debug,  color::fg::light_gray)            \
 L(trace,  color::fg::dark_gray)             \

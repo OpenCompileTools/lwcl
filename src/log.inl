@@ -4,19 +4,15 @@
 #include <chrono>
 #include <sstream>
 #include <mutex>
-#ifdef _WIN32
-#include <Windows.h>
-#endif
 
 #include "logger_options.hpp"
 
-
 namespace oct {
 namespace lwcl {
-	//All log functions redirect to this one
-	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void thread_log(const std::string& thread_name, Args&&... args) {
-		if (options::program_log_level() < msg_level) return;
+namespace impl {
+    template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+    void print(const std::string& thread_name, Args&&... args) {
+        if (options::program_log_level() < msg_level) return;
 
 
 		static std::atomic<bool> sync_val_init(false);
@@ -41,10 +37,14 @@ namespace lwcl {
 			msg << '[' << thread_name << ']';
 
             #define OCT_LWCL_PREFIX_LEVEL \
-			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << "]";
+			msg << '[' << log_level_names[static_cast<std::size_t>(msg_level)] << ']';
 
             OCT_LWCL_PREFIX_FORMAT
 
+
+            (void)std::initializer_list<int> { ((void)(
+                print_src_loc(msg, std::forward<Args>(args))
+            ), 0)... };
             
             msg << ": ";
 		}
@@ -65,30 +65,8 @@ namespace lwcl {
 			for (std::FILE* f : options::c_ostreams())
 				std::fwrite(msg_str.c_str(), sizeof(typename std::ostringstream::char_type), msg_str.size(), f);
 		}
-	}
-
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
-	void thread_log(const std::string& thread_name, Args&&... args) {
-		return thread_log<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
-	}
+    }
 }
-}
-
-
-namespace oct {
-namespace lwcl {
-	//All log_line functions redirect to this one
-	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void thread_log_line(const std::string& thread_name, Args&&... args) {
-		thread_log<msg_level, MTy, Ms...>(thread_name, std::forward<Args>(args)..., '\n', reset_modifiers{});
-		return;
-	}
-
-
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
-	void thread_log_line(const std::string& thread_name, Args&&... args) {
-		return thread_log_line<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
-	}
 }
 }
 
@@ -119,6 +97,39 @@ namespace lwcl {
 	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
 	void log_line(Args&&... args) {
 		return log_line<msg_level, empty_modifiers, Ms...>(std::forward<Args>(args)...);
+	}
+}
+}
+
+
+namespace oct {
+namespace lwcl {
+	//All log functions redirect to this one, which calls print
+	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+	void thread_log(const std::string& thread_name, Args&&... args) {
+        return impl::print<msg_level, MTy, Ms...>(thread_name, std::forward<Args>(args)...);
+	}
+
+	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	void thread_log(const std::string& thread_name, Args&&... args) {
+		return thread_log<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
+	}
+}
+}
+
+
+namespace oct {
+namespace lwcl {
+	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+	void thread_log_line(const std::string& thread_name, Args&&... args) {
+		thread_log<msg_level, MTy, Ms...>(thread_name, std::forward<Args>(args)..., '\n', reset_modifiers{});
+		return;
+	}
+
+
+	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	void thread_log_line(const std::string& thread_name, Args&&... args) {
+		return thread_log_line<msg_level, empty_modifiers, Ms...>(thread_name, std::forward<Args>(args)...);
 	}
 }
 }
@@ -194,16 +205,39 @@ namespace lwcl {
 }
 }
 
-#if defined(__unix__) || (defined (__APPLE__) && defined (__MACH__))
-#include <unistd.h>
-#ifdef _POSIX_VERSION
-#define OCT_LWCL_HAS_POSIX
-#endif
-#endif
 
 
 namespace oct {
 namespace lwcl {
+    namespace impl {
+        template<typename Arg>
+        enable_if_src_loc<Arg, true>
+        print_src_loc(std::ostringstream& oss, Arg&& arg){
+            oss << std::forward<Arg>(arg);
+            return;
+        }
+
+        
+        template<typename Arg>
+        enable_if_src_loc<Arg, false>
+        print_src_loc(std::ostringstream& oss, Arg&&) {
+            return;
+        }
+    }
+}
+}
+
+
+
+namespace oct {
+namespace lwcl {
+    #if defined(__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    #   include <unistd.h>
+    #   ifdef _POSIX_VERSION
+    #       define OCT_LWCL_HAS_POSIX
+    #   endif
+    #endif
+
     namespace impl {
         std::tm* localtime(std::time_t* time, std::tm* buf) {
             #if defined(_MSC_VER)
