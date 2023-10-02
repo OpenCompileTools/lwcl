@@ -3,29 +3,40 @@
 
 #include "modifiers.hpp"
 
+
+#define OCT_LWCL_COLORS(black_val) \
+C(black, = black_val)	   \
+C(dark_red,)			   \
+C(dark_green,)			   \
+C(dark_yellow,)			   \
+C(dark_blue,)			   \
+C(dark_magenta,)		   \
+C(dark_cyan,)			   \
+C(light_gray,)			   \
+						   \
+C(dark_gray, = black + 60) \
+C(red,)					   \
+C(green,)				   \
+C(yellow,)				   \
+C(blue,)				   \
+C(magenta,)				   \
+C(cyan,)				   \
+C(white,)				   
+
+
 namespace oct {
 namespace lwcl {
 	namespace color {
 		namespace foreground {
-			enum : uint_fast8_t {
-				black = 30,
-				dark_red,
-				dark_green,
-				dark_yellow,
-				dark_blue,
-				dark_magenta,
-				dark_cyan,
-				light_gray,
-
-				dark_gray = black + 60,
-				red,
-				green,
-				yellow,
-				blue,
-				magenta,
-				cyan,
-				white,
+			enum class values : uint_fast8_t {
+				#define C(name, ...) name __VA_ARGS__,
+				OCT_LWCL_COLORS(30)
+				#undef C
 			};
+			
+			#define C(name, ...) using name = modifiers<static_cast<uint_fast8_t>(values::name)>;
+			OCT_LWCL_COLORS(30)
+			#undef C
 
 
 			template<uint8_t byte_value>
@@ -47,25 +58,15 @@ namespace oct {
 namespace lwcl {
 	namespace color {
 		namespace background {
-			enum : uint_fast8_t {
-				black = 40,
-				dark_red,
-				dark_green,
-				dark_yellow,
-				dark_blue,
-				dark_magenta,
-				dark_cyan,
-				light_gray,
-
-				dark_gray = black + 60,
-				red,
-				green,
-				yellow,
-				blue,
-				magenta,
-				cyan,
-				white,
+			enum class values : uint_fast8_t {
+				#define C(name, ...) name  __VA_ARGS__,
+				OCT_LWCL_COLORS(40)
+				#undef C
 			};
+			
+			#define C(name, ...) using name = modifiers<static_cast<uint_fast8_t>(values::name)>;
+			OCT_LWCL_COLORS(40)
+			#undef C
 			
 
 			template<uint8_t byte_value>

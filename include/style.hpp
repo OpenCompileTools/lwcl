@@ -3,45 +3,44 @@
 
 #include "modifiers.hpp"
 
+
+#define OCT_LWCL_STYLES \
+S(bold, = 1)			  \
+S(light,)				  \
+S(italic,)				  \
+S(underline,)			  \
+S(strikethrough, = 9)	  \
+						  \
+S(primary_font,)		  \
+S(alt_font_1,)			  \
+S(alt_font_2,)			  \
+S(alt_font_3,)			  \
+S(alt_font_4,)			  \
+S(alt_font_5,)			  \
+S(alt_font_6,)			  \
+S(alt_font_7,)			  \
+S(alt_font_8,)			  \
+S(alt_font_9,)			  \
+						  \
+S(double_underline, = 21) \
+						  \
+S(framed, = 51)			  \
+S(encircled,)			  \
+S(overlined,)
+
+
 namespace oct {
 namespace lwcl {
 	namespace style {
-		enum : uint_fast8_t {
-			bold = 1,
-			light,
-			italic,
-			underline,
-			strikethrough = 9,
-
-			primary_font,
-			alt_font_1,
-			alt_font_2,
-			alt_font_3,
-			alt_font_4,
-			alt_font_5,
-			alt_font_6,
-			alt_font_7,
-			alt_font_8,
-			alt_font_9,
-
-			double_underline = 21,
-
-			framed = 51,
-			encircled,
-			overlined,
-
-			//no_prefix = -1,
+		enum class values : uint_fast8_t {
+			#define S(name, ...) name __VA_ARGS__,
+			OCT_LWCL_STYLES
+			#undef S
 		};
+		
+		#define S(name, ...) using name = modifiers<static_cast<uint_fast8_t>(values::name)>;
+		OCT_LWCL_STYLES
+		#undef S
 	}
 }
 }
-
-
-//namespace oct {
-//namespace lwcl {
-//	using remove_prefix = modifiers<style::no_prefix>;
-//
-//
-//	std::ostream& operator<<(std::ostream& os, remove_prefix) { return os; }
-//}
-//}

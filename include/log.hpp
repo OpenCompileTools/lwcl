@@ -11,24 +11,15 @@
 
 namespace oct {
 namespace lwcl {
-    template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+    template<log_level msg_level, typename... MTys, typename... Args>
     void log(Args&&... args);
 
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
-	void log(Args&&... args);
 
-
-	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void log_line(Args&&... args);
-
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	template<log_level msg_level, typename... MTys, typename... Args>
 	void log_line(Args&&... args);
 
 
-	//template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	//void logf(const char* format, Args&&... args);
-	// 
-	//template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	//template<log_level msg_level, typename... MTys, typename... Args>
 	//void logf(const char* format, Args&&... args);
 }
 }
@@ -36,24 +27,15 @@ namespace lwcl {
 
 namespace oct {
 namespace lwcl {
-	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void thread_log(const std::string& thread_name, Args&&... args);
-
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	template<log_level msg_level, typename... MTys, typename... Args>
 	void thread_log(const std::string& thread_name, Args&&... args);
 
 
-	template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	void thread_log_line(const std::string& thread_name, Args&&... args);
-
-	template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	template<log_level msg_level, typename... MTys, typename... Args>
 	void thread_log_line(const std::string& thread_name, Args&&... args);
 
 
-	//template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
-	//void thread_logf(const char* format, Args&&... args);
-	// 
-	//template<log_level msg_level, std::uint8_t... Ms, typename... Args>
+	//template<log_level msg_level, typename... MTys, typename... Args>
 	//void thread_logf(const char* format, Args&&... args);
 }
 }
@@ -62,40 +44,24 @@ namespace lwcl {
 namespace oct {
 namespace lwcl {
     #define L(name, ...) \
-    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
-    void name(Args&&... args);                                                \
-                                                                              \
-    template<std::uint8_t... Ms, typename... Args>                            \
+    template<typename... MTys, typename... Args>                              \
     void name(Args&&... args);                                                \
                                                                               \
                                                                               \
-    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
-    void name##_line(Args&&... args);                                         \
-                                                                              \
-    template<std::uint8_t... Ms, typename... Args>                            \
+    template<typename... MTys, typename... Args>                              \
     void name##_line(Args&&... args);                                         \
                                                                               \
                                                                               \
-                                                                              \
-    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
-    void thread_##name(const std::string& thread_name, Args&&... args);       \
-                                                                              \
-    template<std::uint8_t... Ms, typename... Args>                            \
+    template<typename... MTys, typename... Args>                              \
     void thread_##name(const std::string& thread_name, Args&&... args);       \
                                                                               \
                                                                               \
-    template<typename MTy, std::uint8_t... Ms, typename... Args>              \
-    void thread_##name##_line(const std::string& thread_name, Args&&... args);\
-                                                                              \
-    template<std::uint8_t... Ms, typename... Args>                            \
+    template<typename... MTys, typename... Args>                              \
     void thread_##name##_line(const std::string& thread_name, Args&&... args);\
                                                                               \
                                                                               \
     namespace impl {                                                          \
-        template<typename MTy, std::uint8_t... Ms>                            \
-        void log_##name##_modifiers();                                        \
-                                                                              \
-        template<std::uint8_t... Ms>                                          \
+        template<typename... MTys>                                            \
         void log_##name##_modifiers();                                        \
     }
 
@@ -108,7 +74,7 @@ namespace lwcl {
 namespace oct {
 namespace lwcl {
     namespace impl {
-        template<log_level msg_level, typename MTy, std::uint8_t... Ms, typename... Args>
+        template<log_level msg_level, typename... MTys, typename... Args>
         void print(const std::string& thread_name, Args&&... args);
     }
 
@@ -134,6 +100,15 @@ namespace lwcl {
 
 namespace oct {
 namespace lwcl {
+    namespace impl {
+        template<typename MTy>
+        void set_prefix(bool& prefix);
+
+        template<>
+        void set_prefix<oct::lwcl::no_prefix>(bool& prefix);
+    }
+
+
     namespace impl {
         std::tm* localtime(std::time_t* time, std::tm* buf);
     }
